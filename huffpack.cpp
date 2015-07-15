@@ -69,15 +69,19 @@ void generateTree(Element* e, code current_code) {
 
 void huff_compress(FILE* input_file, FILE* output_file) {
     
+    codes.clear();
+    leafs.clear();
+    
     //Построение таблицы частот
     int frequencyTable[256];
     for(int i = 0; i < 256; i++) {
         frequencyTable[i] = 0;
     }
     while(1) {
-        char c = getc(input_file);
-        if(c >= 0)
+        int c = getc(input_file);
+        if(c >= 0) {
             frequencyTable[c]++;
+        }
         else
             break;
     }
@@ -108,12 +112,9 @@ void huff_compress(FILE* input_file, FILE* output_file) {
         
     }
     
-    codes.clear();
-    leafs.clear();
-    
 //    printf("\nНачинаем генерировать дерево\n");
     Element* root;
-    root = leafs[0];
+    root = leafs.back();
     vector<int> vec;
     code cur_code = &vec;
     generateTree(root, cur_code);
@@ -143,16 +144,15 @@ void huff_compress(FILE* input_file, FILE* output_file) {
                             break;
                         }
                         if(byte_offset > 7) {
-                            printf("Write output byte: %d\n\n\n\n\n", output_byte);
+                            //printf("Write output byte: %d\n\n\n\n\n", output_byte);
                             fprintf(output_file, "%c", output_byte);
                             output_byte = 0;
                             byte_offset = 0;
-                            break;
                         }
-                        printf("Power: %d\n", (unsigned char)(pow(2, 8 - (byte_offset+1)))*codes[i]->code[code_offset]);
-                        printf("Output byte before: %d\n", output_byte);
+                        //printf("Power: %d\n", (unsigned char)(pow(2, 8 - (byte_offset+1)))*codes[i]->code[code_offset]);
+                        //printf("Output byte before: %d\n", output_byte);
                         output_byte |= (unsigned char)(pow(2, 8 - (byte_offset+1)))*codes[i]->code[code_offset];
-                        printf("Output byte after: %d\n\n", output_byte);
+                        //printf("Output byte after: %d\n\n", output_byte);
                         //printf("%d", codes[i]->code[code_offset]);
                         byte_offset++;
                         code_offset++;
