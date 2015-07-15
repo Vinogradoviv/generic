@@ -23,10 +23,8 @@ int pack(unsigned short int fileCount, char** input_filename_arr, char* output_f
         fprintf(output_file, "NOPE");
     }
     if(pack_alg == PACK_ALG_HUFF) {
-        //compress_function = huff_compress;
-        printf("Huffman algorithm is unsupported\n");
-        fclose(output_file);
-        return 1;
+        compress_function = huff_compress;
+        fprintf(output_file, "HUFF");
     }
     
     //склеивать ли файлы

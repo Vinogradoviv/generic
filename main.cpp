@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
         }
         char* command = argv[1];
         if(strcmp(argv[1], "-p") == 0)
-            pack(fileCount, filename_arr, "output.upa", PACK_ALG_NOPE);
+            pack(fileCount, filename_arr, "output.upa", PACK_ALG_HUFF);
         if(strcmp(argv[1], "-u") == 0)
             unpack(argv[2]);
     }
