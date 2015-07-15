@@ -127,21 +127,54 @@ void huff_compress(FILE* input_file, FILE* output_file) {
 //    }
     
     //Запись потока
+    fseek(input_file, 0, SEEK_SET);
+    unsigned char output_byte = 0;
+    int byte_offset = 0;
     while(1) {
-        unsigned char input_byte = getc(input_file);
-        unsigned char output_byte;
-        int used_bits = 0;
-        if(input_byte >= 0) {
+        int input_byte = getc(input_file);
+        if(input_byte >= 0) { 
+            int code_offset = 0;
+            //Поиск кода
             for(int i = 0; i < codes.size(); i++) {
                 if(input_byte == codes[i]->c) {
+                    //Запись бита
                     while(1) {
-                        
+                        if(code_offset >= codes[i]->code_length) {
+                            break;
+                        }
+                        if(byte_offset > 7) {
+                            printf("Write output byte: %d\n\n\n\n\n", output_byte);
+                            fprintf(output_file, "%c", output_byte);
+                            output_byte = 0;
+                            byte_offset = 0;
+                            break;
+                        }
+                        printf("Power: %d\n", (unsigned char)(pow(2, 8 - (byte_offset+1)))*codes[i]->code[code_offset]);
+                        printf("Output byte before: %d\n", output_byte);
+                        output_byte |= (unsigned char)(pow(2, 8 - (byte_offset+1)))*codes[i]->code[code_offset];
+                        printf("Output byte after: %d\n\n", output_byte);
+                        //printf("%d", codes[i]->code[code_offset]);
+                        byte_offset++;
+                        code_offset++;
                     }
+                    break;
                 }
             }
         } else {
-            
+            break;
         }
     }
+    
+//    int input_byte;
+//    vector<int> binary_string;
+//    int byte_offset = 0;
+//    while(1) {
+//        int input_byte = getc(input_file);
+//        if(input_byte >= 0) {
+//            binary_string.push_back()
+//        }
+//    }
+    
+    printf("\n");
     
 }
