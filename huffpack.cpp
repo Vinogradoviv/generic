@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <cmath>
+#include "utils.h"
 
 using namespace std;
 
@@ -48,10 +49,6 @@ void generateTree(Element* e, code current_code) {
         for(int i = 0; i < newSymbol->code_length; i++) {
             newSymbol->code[i] = current_code->at(i);
         }
-//        printf("Cимвол: %c, код: ", newSymbol->c);
-//        for(int i = 0; i < newSymbol->code_length; i++)
-//            printf("%d", newSymbol->code[i]);
-//        printf("\n");
         codes.push_back(newSymbol);
         return;
     }
@@ -101,7 +98,6 @@ unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
     //Строим дерево
     while(leafs.size() > 1) {
         
-        //Склеиваем минимальные элементы в один
         Element* minElement1 = findAndDeleteMin();
         Element* minElement2 = findAndDeleteMin();
         Element* newParentElement = (Element*)malloc(sizeof(Element));
@@ -112,25 +108,16 @@ unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
         
     }
     
-//    printf("\nНачинаем генерировать дерево\n");
     Element* root;
     root = leafs.back();
     vector<int> vec;
     code cur_code = &vec;
     generateTree(root, cur_code);
     
-//    printf("\nВыводим\n");
-//    for(int i = 0; i < codes.size(); i++) {
-//        printf("Код %c(%d): ", codes[i]->c, codes[i]->code_length);
-//        for(int j = 0; j < codes[i]->code_length; j++)
-//            printf("%d", codes[i]->code[j]);
-//        printf("\n");
-//    }
-    
     //Запись дерева
     unsigned long long tree_size = 0;
     unsigned long long tree_begin_offset = ftell(output_file);
-    fprintf(output_file, "%llu", tree_size);
+    writeLongLongInt(output_file, tree_size);
     for(int i = 0; i < codes.size(); i++) {
         fprintf(output_file, "%c", codes[i]->c);
         fprintf(output_file, "%c", codes[i]->code_length);
@@ -142,7 +129,8 @@ unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
     }
     unsigned long long tree_end_offset = ftell(output_file);
     fseek(output_file, tree_begin_offset, SEEK_SET);
-    fprintf(output_file, "%llu", tree_begin_offset);
+    writeLongLongInt(output_file, tree_size);
+    printf("Huffman tree size: %llu\n", tree_size);
     fseek(output_file, tree_end_offset, SEEK_SET);
     
     //Запись потока
@@ -163,17 +151,12 @@ unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
                             break;
                         }
                         if(byte_offset > 7) {
-                            //printf("Write output byte: %d\n\n\n\n\n", output_byte);
                             fprintf(output_file, "%c", output_byte);
                             packed_data_size++;
                             output_byte = 0;
                             byte_offset = 0;
                         }
-                        //printf("Power: %d\n", (unsigned char)(pow(2, 8 - (byte_offset+1)))*codes[i]->code[code_offset]);
-                        //printf("Output byte before: %d\n", output_byte);
                         output_byte |= (unsigned char)(pow(2, 8 - (byte_offset+1)))*codes[i]->code[code_offset];
-                        //printf("Output byte after: %d\n\n", output_byte);
-                        //printf("%d", codes[i]->code[code_offset]);
                         byte_offset++;
                         code_offset++;
                     }
@@ -185,21 +168,78 @@ unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
         }
     }
     
-//    int input_byte;
-//    vector<int> binary_string;
-//    int byte_offset = 0;
-//    while(1) {
-//        int input_byte = getc(input_file);
-//        if(input_byte >= 0) {
-//            binary_string.push_back()
-//        }
-//    }
+    //Оставшийся байт
+    if(byte_offset > 0) {
+        fprintf(output_file, "%c", output_byte);
+        packed_data_size++;
+    }
     
-    return packed_data_size;
+    return packed_data_size + tree_size + 8;
     
     printf("\n");
     
 }
 void huff_decompress(FILE* input_file, FILE* output_file, unsigned long long stream_size) {
-    printf("Huff decompress\n");
+    
+    unsigned long long tree_size = readLongLongInt(input_file);
+    
+    //Считывание списка кодов
+    codes.clear();
+    unsigned long long offset = 0;
+    while(1) {
+        if(offset > tree_size - 1) {
+            break;
+        }
+        Symbol* newSymbol = (Symbol*)malloc(sizeof(Symbol));
+        newSymbol->c = getc(input_file);
+        newSymbol->code_length = getc(input_file);
+        newSymbol->code = (int*)malloc(newSymbol->code_length*sizeof(int));
+        offset += 2;
+        for(int i = 0; i < newSymbol->code_length; i++) {
+            newSymbol->code[i] = getc(input_file);
+            offset++;
+        }
+        codes.push_back(newSymbol);
+    }
+    
+    //Декодирование
+    unsigned long long data_size = stream_size - tree_size - 8;
+    unsigned char current_byte;
+    int byte_offset = 8;
+    unsigned long long stream_offset = 0;
+    vector<int> current_code_bits;
+    int bits[8];
+    while(1) {
+        if(byte_offset >= 8) {
+            if(stream_offset < data_size) {
+                byte_offset = 0;
+                current_byte = getc(input_file);
+                stream_offset++;
+                for(int i = 0; i < 8; i++) {
+                    unsigned char mask = pow(2, (8-i-1));
+                    bits[i] = (current_byte & mask) > 0;
+                }
+            } else {
+                break;
+            }
+        }
+        current_code_bits.push_back(bits[byte_offset]);
+        for(int j = 0; j < codes.size(); j++) {
+            if(codes[j]->code_length != current_code_bits.size())
+                continue;
+            bool found = true;
+            for(int k = 0; k < current_code_bits.size(); k++) {
+                if(current_code_bits[k] != codes[j]->code[k]) {
+                    found = false;
+                    break;
+                }
+            }
+            if(found) {
+                fprintf(output_file, "%c", codes[j]->c);
+                current_code_bits.clear();
+                break;
+            }
+        }
+        byte_offset++;
+    }
 }
