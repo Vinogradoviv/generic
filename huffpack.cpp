@@ -67,7 +67,7 @@ void generateTree(Element* e, code current_code) {
     }
 }
 
-void huff_compress(FILE* input_file, FILE* output_file) {
+unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
     
     codes.clear();
     leafs.clear();
@@ -127,8 +127,27 @@ void huff_compress(FILE* input_file, FILE* output_file) {
 //        printf("\n");
 //    }
     
+    //Запись дерева
+    unsigned long long tree_size = 0;
+    unsigned long long tree_begin_offset = ftell(output_file);
+    fprintf(output_file, "%llu", tree_size);
+    for(int i = 0; i < codes.size(); i++) {
+        fprintf(output_file, "%c", codes[i]->c);
+        fprintf(output_file, "%c", codes[i]->code_length);
+        tree_size += 2;
+        for(int j = 0; j < codes[i]->code_length; j++) {
+            fprintf(output_file, "%c", codes[i]->code[j]);
+            tree_size++;
+        }
+    }
+    unsigned long long tree_end_offset = ftell(output_file);
+    fseek(output_file, tree_begin_offset, SEEK_SET);
+    fprintf(output_file, "%llu", tree_begin_offset);
+    fseek(output_file, tree_end_offset, SEEK_SET);
+    
     //Запись потока
     fseek(input_file, 0, SEEK_SET);
+    unsigned long long packed_data_size = 0;
     unsigned char output_byte = 0;
     int byte_offset = 0;
     while(1) {
@@ -146,6 +165,7 @@ void huff_compress(FILE* input_file, FILE* output_file) {
                         if(byte_offset > 7) {
                             //printf("Write output byte: %d\n\n\n\n\n", output_byte);
                             fprintf(output_file, "%c", output_byte);
+                            packed_data_size++;
                             output_byte = 0;
                             byte_offset = 0;
                         }
@@ -175,6 +195,11 @@ void huff_compress(FILE* input_file, FILE* output_file) {
 //        }
 //    }
     
+    return packed_data_size;
+    
     printf("\n");
     
+}
+void huff_decompress(FILE* input_file, FILE* output_file, unsigned long long stream_size) {
+    printf("Huff decompress\n");
 }

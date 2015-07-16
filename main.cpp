@@ -23,5 +23,7 @@ int main(int argc, char** argv) {
             unpack(argv[2]);
     }
     
+    //unpack("output.upa");
+    
     return 0;
 }
