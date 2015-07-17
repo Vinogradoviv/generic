@@ -192,6 +192,9 @@ void huff_decompress(FILE* input_file, FILE* output_file, unsigned long long str
     
     unsigned long long tree_size = readLongLongInt(input_file);
     
+    if(original_size == 0)
+        return;
+    
     //Считывание списка кодов
     codes.clear();
     unsigned long long offset = 0;
