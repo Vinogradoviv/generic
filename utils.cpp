@@ -40,3 +40,14 @@ int readInt(FILE* input_file) {
     }
     return d;
 }
+
+unsigned char invertByte(unsigned char d) {
+    int base = 256;
+    unsigned char result = 0;
+    while (d != 0) {
+        base >>= 1;
+        result += (d & 1) * base;
+        d >>= 1;
+    }
+    return result;
+}

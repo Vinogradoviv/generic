@@ -160,7 +160,7 @@ unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
                             break;
                         }
                         if(byte_offset > 7) {
-                            fprintf(output_file, "%c", output_byte);
+                            fprintf(output_file, "%c", invertByte(output_byte));
                             packed_data_size++;
                             output_byte = 0;
                             byte_offset = 0;
@@ -227,7 +227,7 @@ void huff_decompress(FILE* input_file, FILE* output_file, unsigned long long str
         if(byte_offset >= 8) {
             if(stream_offset < data_size) {
                 byte_offset = 0;
-                current_byte = getc(input_file);
+                current_byte = invertByte(getc(input_file));
                 stream_offset++;
                 for(int i = 0; i < 8; i++) {
                     unsigned char mask = pow(2, (8-i-1));
