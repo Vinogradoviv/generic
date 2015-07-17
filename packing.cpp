@@ -2,8 +2,19 @@
 #include <string.h>
 #include <cstdlib>
 #include <cmath>
+#include <vector>
 #include "packing.h"
 #include "utils.h"
+
+typedef struct _packed_file {
+    unsigned char filename_length;
+    char* filename;
+    unsigned long long packed_data_size_offset;
+    unsigned long long original_data_size;
+    unsigned long long original_data_size_offset;
+    unsigned char attributes;
+    int filedate;
+} PackedFile;
 
 const char* file_signature = "UPA";
 int isSolid = 0;
@@ -32,10 +43,12 @@ int pack(unsigned char fileCount, char** input_filename_arr, char* output_file_n
     }
     
     //склеивать ли файлы
-    fprintf(output_file, "%d", isSolid);
+    fprintf(output_file, "%c", isSolid);
     
     //количество файлов
     fprintf(output_file, "%c", fileCount);
+    
+    vector<unsigned long long> packed_sizes;
     
     //Упаковка файлов
     for(int i = 0; i < fileCount; i++) {
@@ -46,20 +59,25 @@ int pack(unsigned char fileCount, char** input_filename_arr, char* output_file_n
             return 1;
         }
         
+        PackedFile* file = (PackedFile*)malloc(sizeof(PackedFile));
+        
         //Имя файла
         unsigned char filename_length = strlen(input_filename_arr[i]);
+        file->filename_length = filename_length;
         fprintf(output_file, "%c", filename_length);
         fprintf(output_file, "%s", input_filename_arr[i]);
         printf("\nFilename: %s\n", input_filename_arr[i]);
         
         //Размер сжатых данных
         int packed_data_size_offset = ftell(output_file);
+        file->packed_data_size_offset = packed_data_size_offset;
         unsigned long long packed_data_size = 0;
         writeLongLongInt(output_file, packed_data_size);
         //fprintf(output_file, "%llu", packed_data_size);
         
         //Размер исходных данных
         int original_data_size_offset = ftell(output_file);
+        file->original_data_size_offset = original_data_size_offset;
         fseek(input_file, 0, SEEK_END);
         unsigned long long original_data_size = ftell(input_file);
         fseek(input_file, 0, SEEK_SET);
@@ -68,10 +86,12 @@ int pack(unsigned char fileCount, char** input_filename_arr, char* output_file_n
         
         //Атрибуты файла
         unsigned char attributes = 0;
+        file->attributes = attributes;
         fprintf(output_file, "%c", attributes);
         
         //Дата
         int filedate = -1;
+        file->filedate = filedate;
         writeInt(output_file, filedate);
         fclose(input_file);
         
