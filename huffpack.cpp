@@ -74,13 +74,21 @@ unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
     for(int i = 0; i < 256; i++) {
         frequencyTable[i] = 0;
     }
+    unsigned long long byte_count = 0;
     while(1) {
         int c = getc(input_file);
         if(c >= 0) {
+            byte_count++;
             frequencyTable[c]++;
         }
         else
             break;
+    }
+    
+    //Если файл пустой
+    if(byte_count == 0) {
+        writeLongLongInt(output_file, 0);
+        return 0;
     }
     
     //Инициализируем дерево
@@ -108,6 +116,7 @@ unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
         
     }
     
+    //Присваивание кодов
     Element* root;
     root = leafs.back();
     vector<int> vec;
@@ -179,7 +188,7 @@ unsigned long long huff_compress(FILE* input_file, FILE* output_file) {
     printf("\n");
     
 }
-void huff_decompress(FILE* input_file, FILE* output_file, unsigned long long stream_size) {
+void huff_decompress(FILE* input_file, FILE* output_file, unsigned long long stream_size, unsigned long long original_size) {
     
     unsigned long long tree_size = readLongLongInt(input_file);
     
@@ -209,6 +218,8 @@ void huff_decompress(FILE* input_file, FILE* output_file, unsigned long long str
     unsigned long long stream_offset = 0;
     vector<int> current_code_bits;
     int bits[8];
+    bool endFlag = false;
+    unsigned long long byte_count = 0;
     while(1) {
         if(byte_offset >= 8) {
             if(stream_offset < data_size) {
@@ -236,9 +247,16 @@ void huff_decompress(FILE* input_file, FILE* output_file, unsigned long long str
             }
             if(found) {
                 fprintf(output_file, "%c", codes[j]->c);
+                byte_count++;
+                if(byte_count >= original_size)
+                    endFlag = true;
                 current_code_bits.clear();
                 break;
             }
+        }
+        if(endFlag) {
+            printf("%llu bytes unpacked\n", byte_count);
+            break;
         }
         byte_offset++;
     }

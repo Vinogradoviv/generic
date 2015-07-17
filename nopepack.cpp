@@ -16,7 +16,7 @@ unsigned long long nope_compress(FILE* input_file, FILE* output_file) {
     return packed_data_size;
 }
 
-void nope_decompress(FILE* input_file, FILE* output_file, unsigned long long stream_size) {
+void nope_decompress(FILE* input_file, FILE* output_file, unsigned long long stream_size, unsigned long long original_size) {
     unsigned long long offset = 0;
     while(offset < stream_size) {
         unsigned char c = getc(input_file);

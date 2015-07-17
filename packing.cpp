@@ -41,6 +41,10 @@ int pack(unsigned char fileCount, char** input_filename_arr, char* output_file_n
     for(int i = 0; i < fileCount; i++) {
         
         FILE* input_file = fopen(input_filename_arr[i], "rb");
+        if(!input_file) {
+            printf(strcat(strcat("File ", input_filename_arr[i]), " not found\n"));
+            return 1;
+        }
         
         //Имя файла
         unsigned char filename_length = strlen(input_filename_arr[i]);
@@ -85,6 +89,7 @@ int pack(unsigned char fileCount, char** input_filename_arr, char* output_file_n
     }
     
     fclose(output_file);
+    return 0;
     
 }
 
@@ -94,7 +99,7 @@ int unpack(char* filename) {
     FILE* input_file = fopen(filename, "rb");
     fseek(input_file, 3, SEEK_SET);
     
-    void (*decompress_function)(FILE*, FILE*, unsigned long long stream_size);
+    void (*decompress_function)(FILE*, FILE*, unsigned long long, unsigned long long);
     char* alg_str = (char*)malloc(4*sizeof(char));
     for(int i = 0; i < 4; i++) {
         alg_str[i] = getc(input_file);
@@ -111,12 +116,13 @@ int unpack(char* filename) {
     for(int i = 0; i < file_count; i++) {
     //for(int i = 0; i < 1; i++) {
         int file_name_length = getc(input_file);
-        printf("\nFilename length: %d\n", file_name_length);
-        char* output_file_name = (char*)malloc(file_name_length*sizeof(char));
+        //printf("\nFilename length: %d\n", file_name_length);
+        char* output_file_name = (char*)malloc((file_name_length+1)*sizeof(char));
         for(int i = 0; i < file_name_length; i++) {
             output_file_name[i] = getc(input_file);
         }
-        printf("Filename: %s\n", output_file_name);
+        output_file_name[file_name_length] = '\0';
+        printf("\nFilename: %s\n", output_file_name);
         FILE* output_file = fopen(strcat(output_file_name, "_unpacked"), "wb");
         unsigned long long packed_stream_size = readLongLongInt(input_file);
         printf("Stream size: %llu\n", packed_stream_size);
@@ -127,7 +133,7 @@ int unpack(char* filename) {
         int timedate = readInt(input_file);
         printf("Timedate: %d\n", timedate);
         
-        decompress_function(input_file, output_file, packed_stream_size);
+        decompress_function(input_file, output_file, packed_stream_size, original_stream_size);
         
     }
 }
