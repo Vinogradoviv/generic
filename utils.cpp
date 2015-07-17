@@ -32,7 +32,7 @@ void writeInt(FILE* output_file, int d) {
     }
 }
 
-unsigned long long readInt(FILE* input_file) {
+int readInt(FILE* input_file) {
     int d = 0;
     for(int i = 0; i < 4; i++) {
         unsigned char c = getc(input_file);

@@ -42,7 +42,7 @@ int pack(unsigned char fileCount, char** input_filename_arr, char* output_file_n
         
         FILE* input_file = fopen(input_filename_arr[i], "rb");
         if(!input_file) {
-            printf(strcat(strcat("File ", input_filename_arr[i]), " not found\n"));
+            printf("File not found\n");
             return 1;
         }
         
@@ -77,7 +77,9 @@ int pack(unsigned char fileCount, char** input_filename_arr, char* output_file_n
         
         //Сжатие файла
         input_file = fopen(input_filename_arr[i], "rb");
+        
         packed_data_size = compress_function(input_file, output_file);
+        
         unsigned long long packed_stream_end_offset = ftell(output_file);
         fseek(output_file, packed_data_size_offset, SEEK_SET);
         writeLongLongInt(output_file, packed_data_size);
@@ -116,7 +118,6 @@ int unpack(char* filename) {
     for(int i = 0; i < file_count; i++) {
     //for(int i = 0; i < 1; i++) {
         int file_name_length = getc(input_file);
-        //printf("\nFilename length: %d\n", file_name_length);
         char* output_file_name = (char*)malloc((file_name_length+1)*sizeof(char));
         for(int i = 0; i < file_name_length; i++) {
             output_file_name[i] = getc(input_file);
